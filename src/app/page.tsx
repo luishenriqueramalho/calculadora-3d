@@ -23,26 +23,11 @@ const initialValues: FormValues = {
   weight: "",
   hours: "",
   minutes: "",
-  material: "",
-  filamentPrice: "",
-  rollWeight: "",
-  printerPower: "",
-  energyPrice: "",
-  machineCost: "",
-  otherCosts: "",
-  margin: "",
-};
-
-const emptyValues: FormValues = {
-  projectName: "",
-  weight: "",
-  hours: "",
-  minutes: "",
-  material: "",
-  filamentPrice: "",
-  rollWeight: "",
-  printerPower: "",
-  energyPrice: "",
+  material: "PLA",
+  filamentPrice: "100",
+  rollWeight: "1000",
+  printerPower: "120",
+  energyPrice: "0.74",
   machineCost: "",
   otherCosts: "",
   margin: "",
@@ -208,7 +193,7 @@ export default function Home() {
 
             <div className={styles.actions}>
               <button type="submit" className={styles.primaryButton}><Icon name="calculator" size={20} />Calcular</button>
-              <button type="button" className={styles.secondaryButton} onClick={() => setValues(emptyValues)}><Icon name="reset" size={20} />Limpar</button>
+              <button type="button" className={styles.secondaryButton} onClick={() => setValues(initialValues)}><Icon name="reset" size={20} />Limpar</button>
             </div>
           </form>
         </section>
