@@ -127,6 +127,35 @@
 .suggested > strong { color: #0960c6; font-size: clamp(26px, 2.7vw, 42px); letter-spacing: -.03em; white-space: nowrap; }
 .pricePulse { animation: pricePulse .45s ease; }
 
+.marketplaces { margin-top: 18px; padding-top: 18px; border-top: 1px solid #e0e6ef; }
+.marketplaceHeading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.marketplaceHeading > span { display: flex; flex-direction: column; gap: 4px; }
+.marketplaceHeading strong { font-size: 15px; }
+.marketplaceHeading small { color: #8290a8; font-size: 10.5px; }
+.storeOptions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.storeToggle { min-height: 48px; padding: 8px 9px; border: 1px solid #dfe6ef; border-radius: 10px; background: #fff; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: border-color .18s, background .18s, transform .18s; }
+.storeToggle:hover { transform: translateY(-1px); border-color: #a9ccee; }
+.storeToggle input { width: 15px; height: 15px; margin: 0; accent-color: #218bf2; }
+.storeToggle strong { font-size: 10.5px; line-height: 1.15; }
+.storeToggleActive { border-color: #75b7f4; background: #f3f9ff; box-shadow: 0 0 0 2px rgba(33,139,242,.08); }
+.storeMark { flex: 0 0 auto; width: 29px; height: 29px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: -.03em; }
+.storeMark.shopee { background: linear-gradient(145deg, #ff7b45, #ed4d2d); }
+.storeMark.tiktok { background: linear-gradient(145deg, #24242a, #08080a); text-shadow: -1px 0 #24f6ef, 1px 0 #fe2c55; }
+.storeMark.mercadoLivre { color: #173b6c; background: linear-gradient(145deg, #ffe76d, #f6c900); }
+.storeResults { display: grid; gap: 8px; margin-top: 10px; }
+.storeResult { padding: 11px 13px; border: 1px solid #e2e9f2; border-radius: 12px; background: #fbfcfe; display: grid; grid-template-columns: minmax(190px, 1.2fr) minmax(260px, 1fr); align-items: center; gap: 14px; }
+.storeResultTitle { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.storeResultTitle > span:last-child { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.storeResultTitle strong { font-size: 12px; }
+.storeResultTitle small { color: #8390a5; font-size: 9px; line-height: 1.25; }
+.storeResult dl { margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.storeResult dl div { padding-left: 8px; border-left: 1px solid #e0e7ef; display: flex; flex-direction: column; gap: 3px; }
+.storeResult dt { color: #8995a9; font-size: 8.5px; }
+.storeResult dd { margin: 0; color: #182744; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.storeResult .storeProfit dd { color: #0a9d70; }
+.storeEmpty { margin: 10px 0 0; padding: 12px; border: 1px dashed #d7e1ed; border-radius: 10px; text-align: center; color: #8996ab; font-size: 10px; }
+.feeNote { margin: 9px 2px 0; color: #96a1b3; font-size: 8.5px; line-height: 1.35; }
+
 .tip { min-height: 77px; margin-top: 13px; padding: 14px 18px; border-radius: 14px; background: #f3f8ff; border: 1px solid #e6eef8; display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; }
 .tip > span { color: #258ef6; }
 .tip p { margin: 0; color: #73849f; font-size: 10.5px; line-height: 1.5; }
@@ -170,6 +199,9 @@
   .suggested { grid-template-columns: 45px 1fr; padding: 14px 12px; }
   .priceIcon { width: 43px; height: 43px; }
   .suggested > strong { grid-column: 1 / -1; text-align: right; }
+  .storeOptions { grid-template-columns: 1fr; }
+  .storeResult { grid-template-columns: 1fr; }
+  .storeResult dl { grid-template-columns: repeat(3, 1fr); }
   .tip { grid-template-columns: 28px 1fr; }
   .tip em { display: none; }
   .footer { height: 55px; align-items: center; justify-content: center; text-align: center; }

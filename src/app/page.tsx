@@ -18,6 +18,15 @@ type FormValues = {
   margin: string;
 };
 
+type StoreKey = "shopee" | "tiktok" | "mercadoLivre";
+
+type FeeTier = {
+  min: number;
+  max: number;
+  rate: number;
+  fixed: number;
+};
+
 const initialValues: FormValues = {
   projectName: "",
   weight: "",
@@ -31,6 +40,44 @@ const initialValues: FormValues = {
   machineCost: "",
   otherCosts: "",
   margin: "",
+};
+
+const storeDetails: Record<StoreKey, { name: string; shortName: string; feeLabel: string }> = {
+  shopee: {
+    name: "Shopee",
+    shortName: "S",
+    feeLabel: "20% + R$ 4 até R$ 79,99; 14% + tarifa por faixa acima",
+  },
+  tiktok: {
+    name: "TikTok Shop",
+    shortName: "T",
+    feeLabel: "Comissão + tarifa por item + programa de envio",
+  },
+  mercadoLivre: {
+    name: "Mercado Livre",
+    shortName: "ML",
+    feeLabel: "14% no Clássico (estimativa conservadora, sem frete)",
+  },
+};
+
+const storeKeys: StoreKey[] = ["shopee", "tiktok", "mercadoLivre"];
+
+const feeTiers: Record<StoreKey, FeeTier[]> = {
+  shopee: [
+    { min: 0, max: 8, rate: 0.7, fixed: 0 },
+    { min: 8, max: 80, rate: 0.2, fixed: 4 },
+    { min: 80, max: 100, rate: 0.14, fixed: 16 },
+    { min: 100, max: 200, rate: 0.14, fixed: 20 },
+    { min: 200, max: Number.POSITIVE_INFINITY, rate: 0.14, fixed: 26 },
+  ],
+  tiktok: [
+    { min: 0, max: 50, rate: 0.16, fixed: 4 },
+    { min: 50, max: 50 / 0.06, rate: 0.12, fixed: 6 },
+    { min: 50 / 0.06, max: Number.POSITIVE_INFINITY, rate: 0.06, fixed: 56 },
+  ],
+  mercadoLivre: [
+    { min: 0, max: Number.POSITIVE_INFINITY, rate: 0.14, fixed: 0 },
+  ],
 };
 
 function Icon({ name, size = 22 }: { name: string; size?: number }) {
@@ -88,11 +135,37 @@ function numberValue(value: string) {
   return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
 }
 
+function marketplaceFee(store: StoreKey, price: number) {
+  if (price <= 0) return 0;
+
+  const tier = feeTiers[store].find(({ min, max }) => price >= min && price < max)
+    ?? feeTiers[store][feeTiers[store].length - 1];
+
+  return price * tier.rate + tier.fixed;
+}
+
+function marketplacePrice(store: StoreKey, targetNet: number) {
+  if (targetNet <= 0) return 0;
+
+  const candidates = feeTiers[store].flatMap((tier) => {
+    const calculated = (targetNet + tier.fixed) / (1 - tier.rate);
+    return [calculated, tier.min].filter((price) => price >= tier.min && price < tier.max);
+  });
+
+  const validPrice = candidates
+    .map((price) => Math.ceil(price * 100) / 100)
+    .sort((a, b) => a - b)
+    .find((price) => price - marketplaceFee(store, price) + 0.0001 >= targetNet);
+
+  return validPrice ?? 0;
+}
+
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function Home() {
   const [values, setValues] = useState<FormValues>(initialValues);
   const [pulse, setPulse] = useState(false);
+  const [selectedStores, setSelectedStores] = useState<StoreKey[]>([]);
 
   const result = useMemo(() => {
     const hours = numberValue(values.hours) + numberValue(values.minutes) / 60;
@@ -110,6 +183,12 @@ export default function Home() {
 
   const update = (key: keyof FormValues, value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
+  };
+
+  const toggleStore = (store: StoreKey) => {
+    setSelectedStores((current) => current.includes(store)
+      ? current.filter((selected) => selected !== store)
+      : [...current, store]);
   };
 
   const calculate = (event: FormEvent) => {
@@ -224,6 +303,54 @@ export default function Home() {
             <span><strong>Preço sugerido</strong><small>Valor ideal para venda do seu projeto.</small></span>
             <strong>{money.format(result.price)}</strong>
           </div>
+
+          <section className={styles.marketplaces}>
+            <div className={styles.marketplaceHeading}>
+              <span><strong>Vender em marketplaces</strong><small>Selecione as lojas para incluir as taxas no preço.</small></span>
+            </div>
+
+            <div className={styles.storeOptions}>
+              {storeKeys.map((store) => (
+                <label key={store} className={`${styles.storeToggle} ${selectedStores.includes(store) ? styles.storeToggleActive : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={selectedStores.includes(store)}
+                    onChange={() => toggleStore(store)}
+                  />
+                  <span className={`${styles.storeMark} ${styles[store]}`}>{storeDetails[store].shortName}</span>
+                  <strong>{storeDetails[store].name}</strong>
+                </label>
+              ))}
+            </div>
+
+            {selectedStores.length > 0 ? (
+              <div className={styles.storeResults} aria-live="polite">
+                {selectedStores.map((store) => {
+                  const price = marketplacePrice(store, result.total + result.profit);
+                  const fee = marketplaceFee(store, price);
+                  const profit = Math.max(0, price - fee - result.total);
+
+                  return (
+                    <article key={store} className={styles.storeResult}>
+                      <div className={styles.storeResultTitle}>
+                        <span className={`${styles.storeMark} ${styles[store]}`}>{storeDetails[store].shortName}</span>
+                        <span><strong>{storeDetails[store].name}</strong><small>{storeDetails[store].feeLabel}</small></span>
+                      </div>
+                      <dl>
+                        <div><dt>Taxas estimadas</dt><dd>{money.format(fee)}</dd></div>
+                        <div><dt>Preço na loja</dt><dd>{money.format(price)}</dd></div>
+                        <div className={styles.storeProfit}><dt>Seu lucro líquido</dt><dd>{money.format(profit)}</dd></div>
+                      </dl>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className={styles.storeEmpty}>Marque uma ou mais lojas para comparar os valores.</p>
+            )}
+
+            <p className={styles.feeNote}>Estimativa com taxas vigentes em set/2026. Fretes variáveis, campanhas, afiliados e impostos não estão incluídos.</p>
+          </section>
 
           <div className={styles.tip}>
             <span><Icon name="bulb" size={25} /></span>
