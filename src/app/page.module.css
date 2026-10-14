@@ -131,6 +131,25 @@
 .suggestionGrid dt { color: #8a96a9; font-size: 8px; }
 .suggestionGrid dd { margin: 0; color: #263a59; font-size: 9.5px; font-weight: 800; white-space: nowrap; }
 
+.resellerSection { margin-top: 14px; }
+.resellerToggle { min-height: 57px; padding: 10px 13px; border: 1px solid #d8e4f0; border-radius: 11px; background: #fbfdff; display: flex; align-items: center; gap: 11px; cursor: pointer; transition: border-color .18s, background .18s; }
+.resellerToggle:hover { border-color: #9bc9f3; background: #f5faff; }
+.resellerToggle input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; accent-color: #1684ee; }
+.resellerToggle > span { display: flex; flex-direction: column; gap: 4px; }
+.resellerToggle strong { color: #213653; font-size: 12px; }
+.resellerToggle small { color: #8290a7; font-size: 9.5px; }
+.resellerCard { margin-top: 9px; padding: 14px; border: 1px solid #b9dff2; border-radius: 12px; background: linear-gradient(145deg, #f1fbff, #edf8f5); }
+.resellerPrice { display: flex; align-items: center; gap: 10px; }
+.resellerPrice > span:first-child { width: 39px; height: 39px; border-radius: 10px; color: #087ec4; background: #d9f1fb; display: grid; place-items: center; }
+.resellerPrice > span:last-child { display: flex; flex-direction: column; gap: 3px; }
+.resellerPrice small { color: #637e94; font-size: 9.5px; }
+.resellerPrice strong { color: #0873a9; font-size: 22px; letter-spacing: -.025em; }
+.resellerCard dl { margin: 12px 0 0; padding-top: 11px; border-top: 1px solid #cee4e9; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.resellerCard dl div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.resellerCard dt { color: #70879a; font-size: 8.5px; }
+.resellerCard dd { margin: 0; color: #193f50; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.resellerCard p { margin: 11px 0 0; color: #74899a; font-size: 8.5px; line-height: 1.45; }
+
 .actions { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; margin-top: 22px; }
 .actions button { border: 0; border-radius: 9px; height: 45px; font: inherit; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: transform .18s, box-shadow .18s, background .18s; }
 .actions button:hover { transform: translateY(-1px); }
@@ -238,6 +257,7 @@
   .suggestionGrid article { display: grid; grid-template-columns: 1fr auto; align-items: center; }
   .suggestionGrid article > small { grid-column: 1 / -1; }
   .suggestionGrid dl { grid-column: 1 / -1; }
+  .resellerCard dl { grid-template-columns: 1fr 1fr; row-gap: 11px; }
   .summaryRow { grid-template-columns: 45px 1fr auto; padding-left: 8px; padding-right: 10px; gap: 9px; }
   .summaryIcon { width: 43px; height: 43px; }
   .summaryCopy small { display: none; }

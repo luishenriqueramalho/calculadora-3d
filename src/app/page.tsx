@@ -170,6 +170,43 @@ function marketplacePrice(store: StoreKey, targetNet: number) {
   return validPrice ?? 0;
 }
 
+function resellerPrice(totalCost: number) {
+  if (totalCost <= 0) {
+    return {
+      makerMarkup: 0,
+      makerMargin: 0,
+      resellerMargin: 0,
+      wholesalePrice: 0,
+      retailPrice: 0,
+      makerProfit: 0,
+      resellerProfit: 0,
+    };
+  }
+
+  const tier = totalCost <= 25
+    ? { makerMarkup: 0.8, resellerMargin: 0.4 }
+    : totalCost <= 75
+      ? { makerMarkup: 0.65, resellerMargin: 0.35 }
+      : totalCost <= 200
+        ? { makerMarkup: 0.55, resellerMargin: 0.32 }
+        : { makerMarkup: 0.45, resellerMargin: 0.3 };
+  const wholesalePrice = Math.ceil(totalCost * (1 + tier.makerMarkup) * 100) / 100;
+  const retailPrice = Math.ceil((wholesalePrice / (1 - tier.resellerMargin)) * 100) / 100;
+  const makerProfit = wholesalePrice - totalCost;
+  const resellerProfit = retailPrice - wholesalePrice;
+  const makerMargin = (makerProfit / wholesalePrice) * 100;
+
+  return {
+    makerMarkup: tier.makerMarkup * 100,
+    makerMargin,
+    resellerMargin: tier.resellerMargin * 100,
+    wholesalePrice,
+    retailPrice,
+    makerProfit,
+    resellerProfit,
+  };
+}
+
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function Home() {
@@ -177,6 +214,7 @@ export default function Home() {
   const [filaments, setFilaments] = useState<Filament[]>(initialFilaments);
   const [pulse, setPulse] = useState(false);
   const [selectedStores, setSelectedStores] = useState<StoreKey[]>([]);
+  const [showResellerPrice, setShowResellerPrice] = useState(false);
 
   const result = useMemo(() => {
     const hours = numberValue(values.hours) + numberValue(values.minutes) / 60;
@@ -218,6 +256,7 @@ export default function Home() {
     (total, filament) => total + numberValue(filament.usedWeight),
     0,
   );
+  const reseller = useMemo(() => resellerPrice(result.total), [result.total]);
 
   const update = (key: keyof FormValues, value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -248,6 +287,7 @@ export default function Home() {
     setValues(initialValues);
     setFilaments(initialFilaments.map((filament) => ({ ...filament })));
     setSelectedStores([]);
+    setShowResellerPrice(false);
   };
 
   const toggleStore = (store: StoreKey) => {
@@ -384,6 +424,34 @@ export default function Home() {
                   </article>
                 ))}
               </div>
+            </section>
+
+            <section className={styles.resellerSection}>
+              <label className={styles.resellerToggle}>
+                <input type="checkbox" checked={showResellerPrice} onChange={(event) => setShowResellerPrice(event.target.checked)} />
+                <span>
+                  <strong>Calcular preço para revendedor</strong>
+                  <small>Recomendação independente do lucro definido acima.</small>
+                </span>
+              </label>
+
+              {showResellerPrice && (
+                <article className={styles.resellerCard} aria-live="polite">
+                  <div className={styles.resellerPrice}>
+                    <span><Icon name="tag" size={22} /></span>
+                    <span><small>Preço recomendado para o revendedor</small><strong>{money.format(reseller.wholesalePrice)}</strong></span>
+                  </div>
+                  <dl>
+                    <div><dt>Seu lucro por unidade</dt><dd>{money.format(reseller.makerProfit)}</dd></div>
+                    <div><dt>Margem na sua venda</dt><dd>{reseller.makerMargin.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</dd></div>
+                    <div><dt>Preço sugerido ao consumidor</dt><dd>{money.format(reseller.retailPrice)}</dd></div>
+                    <div><dt>Lucro do revendedor</dt><dd>{money.format(reseller.resellerProfit)}</dd></div>
+                  </dl>
+                  <p>
+                    O cálculo aplica {reseller.makerMarkup.toLocaleString("pt-BR")}% sobre o seu custo e reserva uma margem de {reseller.resellerMargin.toLocaleString("pt-BR")}% para o revendedor. Frete, impostos e taxas de marketplace não estão incluídos.
+                  </p>
+                </article>
+              )}
             </section>
 
             <div className={styles.actions}>
