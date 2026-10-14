@@ -4,18 +4,22 @@ import { ChangeEvent, FormEvent, ReactNode, useMemo, useState } from "react";
 import styles from "./page.module.css";
 
 type FormValues = {
-  projectName: string;
-  weight: string;
   hours: string;
   minutes: string;
-  material: string;
-  filamentPrice: string;
-  rollWeight: string;
   printerPower: string;
   energyPrice: string;
   machineCost: string;
   otherCosts: string;
   margin: string;
+};
+
+type Filament = {
+  id: string;
+  color: string;
+  material: string;
+  usedWeight: string;
+  filamentPrice: string;
+  rollWeight: string;
 };
 
 type StoreKey = "shopee" | "tiktok" | "mercadoLivre";
@@ -28,19 +32,23 @@ type FeeTier = {
 };
 
 const initialValues: FormValues = {
-  projectName: "",
-  weight: "",
   hours: "",
   minutes: "",
-  material: "PLA",
-  filamentPrice: "100",
-  rollWeight: "1000",
   printerPower: "120",
   energyPrice: "0.74",
-  machineCost: "",
+  machineCost: "0.50",
   otherCosts: "",
-  margin: "",
+  margin: "100",
 };
+
+const initialFilaments: Filament[] = [{
+  id: "filament-1",
+  color: "",
+  material: "PLA",
+  usedWeight: "",
+  filamentPrice: "100",
+  rollWeight: "1000",
+}];
 
 const storeDetails: Record<StoreKey, { name: string; shortName: string; feeLabel: string }> = {
   shopee: {
@@ -101,6 +109,8 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
     coin: <><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v5c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 10v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5M5 15v3c0 1.7 3.1 3 7 3s7-1.3 7-3v-3"/></>,
     sum: <path d="M18 4H7l6 8-6 8h11"/>,
     trend: <path d="M5 20v-5m5 5v-9m5 9V7m5 13V3"/>,
+    plus: <><path d="M12 5v14M5 12h14"/></>,
+    trash: <><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></>,
   };
 
   return (
@@ -164,14 +174,20 @@ const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL
 
 export default function Home() {
   const [values, setValues] = useState<FormValues>(initialValues);
+  const [filaments, setFilaments] = useState<Filament[]>(initialFilaments);
   const [pulse, setPulse] = useState(false);
   const [selectedStores, setSelectedStores] = useState<StoreKey[]>([]);
 
   const result = useMemo(() => {
     const hours = numberValue(values.hours) + numberValue(values.minutes) / 60;
-    const material = numberValue(values.rollWeight)
-      ? (numberValue(values.weight) / numberValue(values.rollWeight)) * numberValue(values.filamentPrice)
-      : 0;
+    const material = filaments.reduce((total, filament) => {
+      const rollWeight = numberValue(filament.rollWeight);
+      const cost = rollWeight
+        ? (numberValue(filament.usedWeight) / rollWeight) * numberValue(filament.filamentPrice)
+        : 0;
+
+      return total + cost;
+    }, 0);
     const energy = hours * (numberValue(values.printerPower) / 1000) * numberValue(values.energyPrice);
     const machine = hours * numberValue(values.machineCost);
     const others = numberValue(values.otherCosts);
@@ -179,10 +195,59 @@ export default function Home() {
     const profit = total * (numberValue(values.margin) / 100);
 
     return { material, energy, machine, others, total, profit, price: total + profit };
-  }, [values]);
+  }, [filaments, values]);
+
+  const priceSuggestions = useMemo(() => {
+    const chosenPercentage = numberValue(values.margin);
+    const options = [
+      { label: "Competitivo", percentage: Math.max(0, chosenPercentage - 25) },
+      { label: "Recomendado", percentage: chosenPercentage },
+      { label: "Premium", percentage: Math.min(300, chosenPercentage + 50) },
+    ];
+
+    return options.map(({ label, percentage }) => {
+      const profit = result.total * (percentage / 100);
+      const price = result.total + profit;
+      const realMargin = price > 0 ? (profit / price) * 100 : 0;
+
+      return { label, percentage, profit, price, realMargin };
+    });
+  }, [result.total, values.margin]);
+
+  const totalFilamentWeight = filaments.reduce(
+    (total, filament) => total + numberValue(filament.usedWeight),
+    0,
+  );
 
   const update = (key: keyof FormValues, value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
+  };
+
+  const updateFilament = (id: string, key: keyof Omit<Filament, "id">, value: string) => {
+    setFilaments((current) => current.map((filament) => (
+      filament.id === id ? { ...filament, [key]: value } : filament
+    )));
+  };
+
+  const addFilament = () => {
+    setFilaments((current) => [...current, {
+      id: `filament-${Date.now()}`,
+      color: "",
+      material: "PLA",
+      usedWeight: "",
+      filamentPrice: "100",
+      rollWeight: "1000",
+    }]);
+  };
+
+  const removeFilament = (id: string) => {
+    setFilaments((current) => current.filter((filament) => filament.id !== id));
+  };
+
+  const reset = () => {
+    setValues(initialValues);
+    setFilaments(initialFilaments.map((filament) => ({ ...filament })));
+    setSelectedStores([]);
   };
 
   const toggleStore = (store: StoreKey) => {
@@ -226,29 +291,11 @@ export default function Home() {
 
           <form onSubmit={calculate} className={styles.form}>
             <div className={styles.formGrid}>
-              <Field id="projectName" label="Nome do projeto" hint="Dê um nome para identificar seu projeto." icon="file">
-                <input id="projectName" type="text" placeholder="Ex.: Miniatura articulada" {...inputProps("projectName")} />
-              </Field>
-              <Field id="weight" label="Peso da peça (g)" hint="Peso final da peça impressa." icon="weight">
-                <input id="weight" type="number" min="0" step="0.01" placeholder="Ex.: 120,50" {...inputProps("weight")} />
-              </Field>
               <Field id="hours" label="Tempo de impressão" hint="Tempo total estimado de impressão." icon="clock">
                 <div className={styles.splitInput}>
                   <span><input id="hours" aria-label="Horas" type="number" min="0" step="1" placeholder="Ex.: 8" {...inputProps("hours")} /><em>Horas</em></span>
                   <span><input aria-label="Minutos" type="number" min="0" max="59" step="1" placeholder="Ex.: 30" {...inputProps("minutes")} /><em>Min</em></span>
                 </div>
-              </Field>
-              <Field id="material" label="Material" hint="Selecione o material utilizado." icon="cube">
-                <select id="material" value={values.material} onChange={(event) => update("material", event.target.value)}>
-                  <option value="" disabled>Selecione o material</option>
-                  <option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>Resina</option>
-                </select>
-              </Field>
-              <Field id="filamentPrice" label="Preço do filamento (R$)" hint="Valor pago no rolo de filamento." icon="tag">
-                <input id="filamentPrice" type="number" min="0" step="0.01" placeholder="Ex.: 89,90" {...inputProps("filamentPrice")} />
-              </Field>
-              <Field id="rollWeight" label="Peso do rolo (g)" hint="Peso total do rolo de filamento." icon="spool">
-                <input id="rollWeight" type="number" min="1" step="0.01" placeholder="Ex.: 1000" {...inputProps("rollWeight")} />
               </Field>
               <Field id="printerPower" label="Consumo da impressora (W)" hint="Potência média durante a impressão." icon="bolt">
                 <input id="printerPower" type="number" min="0" step="0.01" placeholder="Ex.: 120" {...inputProps("printerPower")} />
@@ -257,22 +304,91 @@ export default function Home() {
                 <input id="energyPrice" type="number" min="0" step="0.01" placeholder="Ex.: 0,95" {...inputProps("energyPrice")} />
               </Field>
               <Field id="machineCost" label="Custo da máquina por hora (R$)" hint="Inclua depreciação, manutenção, etc." icon="gear">
-                <input id="machineCost" type="number" min="0" step="0.01" placeholder="Ex.: 2,00" {...inputProps("machineCost")} />
+                <input id="machineCost" type="number" min="0" step="0.01" placeholder="Sugestão: 0,50" {...inputProps("machineCost")} />
               </Field>
               <Field id="otherCosts" label="Outros custos (R$)" hint="Ex.: pós-processamento, embalagem, etc." icon="wallet">
                 <input id="otherCosts" type="number" min="0" step="0.01" placeholder="Ex.: 3,00" {...inputProps("otherCosts")} />
               </Field>
             </div>
 
+            <section className={styles.filamentSection}>
+              <div className={styles.filamentHeading}>
+                <span>
+                  <strong><Icon name="spool" size={20} />Filamentos utilizados</strong>
+                  <small>Informe o consumo e o custo de cada cor usada na impressão.</small>
+                </span>
+                <span className={styles.weightBadge}>{totalFilamentWeight.toLocaleString("pt-BR")} g no total</span>
+              </div>
+
+              <div className={styles.filamentList}>
+                {filaments.map((filament, index) => (
+                  <fieldset key={filament.id} className={styles.filamentRow}>
+                    <legend>Filamento {index + 1}</legend>
+                    <label>
+                      <span>Cor</span>
+                      <input type="text" placeholder="Ex.: Azul" value={filament.color} onChange={(event) => updateFilament(filament.id, "color", event.target.value)} />
+                    </label>
+                    <label>
+                      <span>Material</span>
+                      <select value={filament.material} onChange={(event) => updateFilament(filament.id, "material", event.target.value)}>
+                        <option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>Resina</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Gasto na cor (g)</span>
+                      <input type="number" min="0" step="0.01" placeholder="Ex.: 80" value={filament.usedWeight} onChange={(event) => updateFilament(filament.id, "usedWeight", event.target.value)} />
+                    </label>
+                    <label>
+                      <span>Valor do filamento (R$)</span>
+                      <input type="number" min="0" step="0.01" placeholder="Ex.: 100,00" value={filament.filamentPrice} onChange={(event) => updateFilament(filament.id, "filamentPrice", event.target.value)} />
+                    </label>
+                    <label>
+                      <span>Peso do rolo (g)</span>
+                      <input type="number" min="1" step="0.01" placeholder="Ex.: 1000" value={filament.rollWeight} onChange={(event) => updateFilament(filament.id, "rollWeight", event.target.value)} />
+                    </label>
+                    {filaments.length > 1 && (
+                      <button type="button" className={styles.removeFilament} aria-label={`Remover filamento ${index + 1}`} onClick={() => removeFilament(filament.id)}>
+                        <Icon name="trash" size={18} />
+                      </button>
+                    )}
+                  </fieldset>
+                ))}
+              </div>
+
+              <button type="button" className={styles.addFilament} onClick={addFilament}>
+                <Icon name="plus" size={18} />Adicionar outro filamento
+              </button>
+            </section>
+
             <div className={styles.marginField}>
-              <label htmlFor="margin"><Icon name="trend" size={20} /><span><strong>Margem de lucro (%)</strong><small>Defina a margem de lucro desejada.</small></span></label>
+              <label htmlFor="margin"><Icon name="trend" size={20} /><span><strong>Lucro sobre o custo (%)</strong><small>Use 100% para dobrar o custo total.</small></span></label>
               <input id="margin" type="range" min="0" max="200" step="1" value={values.margin || "0"} onChange={(event) => update("margin", event.target.value)} />
               <span className={styles.marginValue}><input aria-label="Margem de lucro em porcentagem" type="number" min="0" max="200" placeholder="Ex.: 50" value={values.margin} onChange={(event) => update("margin", event.target.value)} /><em>%</em></span>
             </div>
 
+            <section className={styles.priceSuggestions} aria-label="Sugestões de preço">
+              <div className={styles.suggestionIntro}>
+                <strong>Sugestões para a sua venda</strong>
+                <small>Valores calculados a partir dos custos preenchidos.</small>
+              </div>
+              <div className={styles.suggestionGrid}>
+                {priceSuggestions.map((suggestion) => (
+                  <article key={suggestion.label} className={suggestion.label === "Recomendado" ? styles.recommendedSuggestion : ""}>
+                    <span>{suggestion.label}</span>
+                    <strong>{money.format(suggestion.price)}</strong>
+                    <small>{suggestion.percentage}% sobre o custo</small>
+                    <dl>
+                      <div><dt>Lucro</dt><dd>{money.format(suggestion.profit)}</dd></div>
+                      <div><dt>Margem no preço</dt><dd>{suggestion.realMargin.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+            </section>
+
             <div className={styles.actions}>
               <button type="submit" className={styles.primaryButton}><Icon name="calculator" size={20} />Calcular</button>
-              <button type="button" className={styles.secondaryButton} onClick={() => setValues(initialValues)}><Icon name="reset" size={20} />Limpar</button>
+              <button type="button" className={styles.secondaryButton} onClick={reset}><Icon name="reset" size={20} />Limpar</button>
             </div>
           </form>
         </section>
@@ -285,7 +401,7 @@ export default function Home() {
           </div>
 
           <div className={styles.summaryList}>
-            <SummaryRow icon="coin" tone="blue" label="Custo do material" hint="Baseado no peso da peça e no preço do filamento." value={money.format(result.material)} />
+            <SummaryRow icon="coin" tone="blue" label="Custo dos filamentos" hint="Soma do consumo informado para cada cor." value={money.format(result.material)} />
             <SummaryRow icon="bolt" tone="green" label="Custo de energia" hint="Baseado no tempo de impressão e no consumo." value={money.format(result.energy)} />
             <SummaryRow icon="gear" tone="orange" label="Custo da máquina" hint="Tempo de uso da impressora." value={money.format(result.machine)} />
             <SummaryRow icon="wallet" tone="purple" label="Outros custos" hint="Custos adicionais do projeto." value={money.format(result.others)} />
@@ -295,7 +411,7 @@ export default function Home() {
 
           <div className={styles.totals}>
             <SummaryRow icon="sum" tone="gray" label="Custo total" hint="Soma de todos os custos." value={money.format(result.total)} />
-            <SummaryRow icon="trend" tone="green" label="Lucro estimado" hint={`Baseado na margem de lucro de ${numberValue(values.margin)}%.`} value={money.format(result.profit)} />
+            <SummaryRow icon="trend" tone="green" label="Lucro estimado" hint={`Acréscimo de ${numberValue(values.margin)}% sobre o custo.`} value={money.format(result.profit)} />
           </div>
 
           <div className={`${styles.suggested} ${pulse ? styles.pricePulse : ""}`}>
@@ -338,7 +454,7 @@ export default function Home() {
                       </div>
                       <dl>
                         <div><dt>Taxas estimadas</dt><dd>{money.format(fee)}</dd></div>
-                        <div><dt>Preço na loja</dt><dd>{money.format(price)}</dd></div>
+                        <div className={styles.storePrice}><dt>Preço sugerido de venda</dt><dd>{money.format(price)}</dd></div>
                         <div className={styles.storeProfit}><dt>Seu lucro líquido</dt><dd>{money.format(profit)}</dd></div>
                       </dl>
                     </article>
