@@ -34,6 +34,10 @@ export const settingGroups = {
 } as const;
 
 export const allowedSettingKeys = new Set<string>(Object.values(settingGroups).flat());
+const filamentSettingKeys = new Set<string>([
+  ...settingGroups.Temperatura,
+  ...settingGroups.Resfriamento,
+]);
 
 export type SettingDetails = {
   label: string;
@@ -320,6 +324,78 @@ function applyChangesToConfig(config: Record<string, unknown>, changes: Suggeste
   return applied;
 }
 
+function addSettingToOverrideList(value: unknown, key: string) {
+  const keys = String(value ?? "")
+    .split(";")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (!keys.includes(key)) keys.push(key);
+  return [...new Set(keys)].sort().join(";");
+}
+
+function registerProjectOverrides(config: Record<string, unknown>, changes: SuggestedChange[]) {
+  const filamentCount = Math.max(
+    ...["filament_settings_id", "filament_type", "nozzle_temperature"]
+      .map((key) => Array.isArray(config[key]) ? config[key].length : 0),
+    1,
+  );
+  const current = Array.isArray(config.different_settings_to_system)
+    ? config.different_settings_to_system.map(String)
+    : [];
+  const overrides = [...current];
+
+  // O Bambu Studio usa N + 2 posições: processo, N filamentos e máquina.
+  while (overrides.length < filamentCount + 2) overrides.push("");
+
+  for (const change of changes) {
+    if (filamentSettingKeys.has(change.chave)) {
+      for (let index = 1; index <= filamentCount; index += 1) {
+        overrides[index] = addSettingToOverrideList(overrides[index], change.chave);
+      }
+    } else {
+      overrides[0] = addSettingToOverrideList(overrides[0], change.chave);
+    }
+  }
+
+  config.different_settings_to_system = overrides;
+}
+
+function escapeXmlAttribute(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function applyChangesToModelSettings(xml: string, changes: SuggestedChange[]) {
+  const byKey = new Map(changes.map((change) => [change.chave, change.valor]));
+  return xml.replace(/<metadata\b[^>]*>/gi, (tag) => {
+    const key = tag.match(/\bkey=(['"])(.*?)\1/i)?.[2];
+    const value = key ? byKey.get(key) : undefined;
+    if (value === undefined || !/\bvalue=(['"])(.*?)\1/i.test(tag)) return tag;
+    return tag.replace(/\bvalue=(['"])(.*?)\1/i, (_match, quote: string) => (
+      `value=${quote}${escapeXmlAttribute(value)}${quote}`
+    ));
+  });
+}
+
+function applyChangesToLayerRanges(xml: string, changes: SuggestedChange[]) {
+  const byKey = new Map(changes.map((change) => [change.chave, change.valor]));
+  return xml.replace(/(<option\b[^>]*\bopt_key=(['"])(.*?)\2[^>]*>)([\s\S]*?)(<\/option>)/gi, (
+    match,
+    opening: string,
+    _quote: string,
+    key: string,
+    _current: string,
+    closing: string,
+  ) => {
+    const value = byKey.get(key);
+    return value === undefined ? match : `${opening}${escapeXmlAttribute(value)}${closing}`;
+  });
+}
+
 function isEmbeddedSettingsPath(path: string) {
   return /^metadata\/(?:process|filament|machine)_settings_\d+\.config$/i.test(path);
 }
@@ -337,6 +413,14 @@ function valuesMatch(value: unknown, expected: string) {
   return value === coerceLike(expected, value);
 }
 
+function projectOverridesContain(config: Record<string, unknown>, change: SuggestedChange) {
+  const overrides = Array.isArray(config.different_settings_to_system)
+    ? config.different_settings_to_system.map(String)
+    : [];
+  const slots = filamentSettingKeys.has(change.chave) ? overrides.slice(1, -1) : overrides.slice(0, 1);
+  return slots.length > 0 && slots.every((slot) => slot.split(";").includes(change.chave));
+}
+
 export async function createAdjusted3mf(file: File, project: ProjectInfo, changes: SuggestedChange[]) {
   const zip = await JSZip.loadAsync(file);
   const configFile = zip.file(project.settingsPath);
@@ -348,8 +432,27 @@ export async function createAdjusted3mf(file: File, project: ProjectInfo, change
   if (missing.length) {
     throw new Error(`Não foi possível aplicar: ${missing.map((change) => change.chave).join(", ")}.`);
   }
+  registerProjectOverrides(config, changes);
 
   zip.file(project.settingsPath, JSON.stringify(config, null, 4));
+
+  const modelSettingsPath = Object.keys(zip.files).find((path) => /(?:^|\/)model_settings\.config$/i.test(path));
+  if (modelSettingsPath) {
+    const modelSettingsFile = zip.file(modelSettingsPath);
+    if (modelSettingsFile) {
+      const modelSettings = await modelSettingsFile.async("string");
+      zip.file(modelSettingsPath, applyChangesToModelSettings(modelSettings, changes));
+    }
+  }
+
+  const layerRangesPath = Object.keys(zip.files).find((path) => /(?:^|\/)layer_config_ranges\.xml$/i.test(path));
+  if (layerRangesPath) {
+    const layerRangesFile = zip.file(layerRangesPath);
+    if (layerRangesFile) {
+      const layerRanges = await layerRangesFile.async("string");
+      zip.file(layerRangesPath, applyChangesToLayerRanges(layerRanges, changes));
+    }
+  }
 
   const embeddedPaths = Object.keys(zip.files).filter(isEmbeddedSettingsPath);
   await Promise.all(embeddedPaths.map(async (path) => {
@@ -375,7 +478,10 @@ export async function createAdjusted3mf(file: File, project: ProjectInfo, change
   const verifiedFile = verificationZip.file(project.settingsPath);
   if (!verifiedFile) throw new Error("O 3MF gerado não contém as configurações atualizadas.");
   const verifiedConfig = JSON.parse(await verifiedFile.async("string")) as Record<string, unknown>;
-  const notVerified = changes.filter((change) => !valuesMatch(verifiedConfig[change.chave], change.valor));
+  const notVerified = changes.filter((change) => (
+    !valuesMatch(verifiedConfig[change.chave], change.valor)
+    || !projectOverridesContain(verifiedConfig, change)
+  ));
   if (notVerified.length) {
     throw new Error(`O 3MF não confirmou as alterações: ${notVerified.map((change) => change.chave).join(", ")}.`);
   }
