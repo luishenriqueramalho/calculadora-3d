@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { FlowHeader, MissingProject } from "@/components/PrintFlow";
 import { usePrintProject } from "@/components/PrintProjectProvider";
-import { createAdjusted3mf } from "@/lib/three-mf";
+import { createAdjusted3mf, getSettingDetails } from "@/lib/three-mf";
 import styles from "../configurator.module.css";
 
 export default function ChangesPage() {
@@ -14,8 +14,10 @@ export default function ChangesPage() {
   );
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
+  const [downloadedCount, setDownloadedCount] = useState<number | null>(null);
 
   const toggle = (index: number) => {
+    setDownloadedCount(null);
     setSelected((current) => {
       const next = new Set(current);
       if (next.has(index)) next.delete(index); else next.add(index);
@@ -27,6 +29,7 @@ export default function ChangesPage() {
     if (!file || !project || !suggestion || selected.size === 0) return;
     setDownloading(true);
     setError("");
+    setDownloadedCount(null);
     try {
       const changes = suggestion.alteracoes.filter((_, index) => selected.has(index));
       const blob = await createAdjusted3mf(file, project, changes);
@@ -38,6 +41,7 @@ export default function ChangesPage() {
       anchor.click();
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setDownloadedCount(changes.length);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Não foi possível gerar o novo arquivo.");
     } finally {
@@ -62,7 +66,10 @@ export default function ChangesPage() {
             <div className={styles.suggestionSummary}><strong>Resumo da IA</strong>{suggestion.resumo}</div>
             <div className={styles.reviewToolbar}>
               <span>{selected.size} de {suggestion.alteracoes.length} selecionada(s)</span>
-              <button type="button" onClick={() => setSelected(selected.size === suggestion.alteracoes.length ? new Set() : new Set(suggestion.alteracoes.map((_, index) => index)))}>
+              <button type="button" onClick={() => {
+                setDownloadedCount(null);
+                setSelected(selected.size === suggestion.alteracoes.length ? new Set() : new Set(suggestion.alteracoes.map((_, index) => index)));
+              }}>
                 {selected.size === suggestion.alteracoes.length ? "Desmarcar todas" : "Selecionar todas"}
               </button>
             </div>
@@ -72,7 +79,11 @@ export default function ChangesPage() {
                   <input type="checkbox" checked={selected.has(index)} onChange={() => toggle(index)} />
                   <div className={styles.changeBody}>
                     <div className={styles.changeHead}>
-                      <code>{change.chave}</code>
+                      <div className={styles.settingIdentity}>
+                        <strong>{getSettingDetails(change.chave).label}</strong>
+                        <code>{change.chave}</code>
+                        <small>Aba: {getSettingDetails(change.chave).tab}</small>
+                      </div>
                       <span><i className={styles.oldValue}>{project.settings[change.chave]}</i><b>→</b><i className={styles.newValue}>{change.valor}</i></span>
                     </div>
                     <p>{change.motivo}</p>
@@ -81,6 +92,7 @@ export default function ChangesPage() {
               ))}
             </div>
             {error && <p className={styles.error} role="alert">{error}</p>}
+            {downloadedCount !== null && <p className={styles.downloadSuccess} role="status">✓ 3MF gerado e conferido: todas as {downloadedCount} alterações foram gravadas. Ao abrir no fatiador, refaça o fatiamento.</p>}
             <div className={styles.contentActions}>
               <Link href="/configuracao/resposta" className={styles.secondaryButton}>← Editar resposta</Link>
               <button type="button" className={styles.primaryButton} disabled={downloading || selected.size === 0} onClick={() => void download()}>

@@ -18,6 +18,10 @@ export default function PromptPage() {
     window.setTimeout(() => setCopied(false), 1800);
   };
 
+  const copyBeforeOpening = () => {
+    void copy();
+  };
+
   return (
     <main className={styles.page}>
       <div className={styles.container}>
@@ -30,9 +34,17 @@ export default function PromptPage() {
               <pre className={styles.codeBox}>{prompt}</pre>
               <ol className={styles.instructionList}>
                 <li><span>1</span><div>Copie o prompt completo pelo botão abaixo.</div></li>
-                <li><span>2</span><div>Cole em uma nova conversa na IA de sua preferência.</div></li>
+                <li><span>2</span><div>Abra o ChatGPT ou o Claude; o prompt também será copiado ao clicar.</div></li>
                 <li><span>3</span><div>Depois, volte e avance para colar a resposta recebida.</div></li>
               </ol>
+              <div className={styles.aiLinks} aria-label="Abrir uma inteligência artificial">
+                <a href="https://chatgpt.com/" target="_blank" rel="noreferrer" onClick={copyBeforeOpening} className={styles.chatGptButton}>
+                  <span>◎</span><div><small>ABRIR E COLAR NO</small><strong>ChatGPT</strong></div><b>↗</b>
+                </a>
+                <a href="https://claude.ai/new" target="_blank" rel="noreferrer" onClick={copyBeforeOpening} className={styles.claudeButton}>
+                  <span>AI</span><div><small>ABRIR E COLAR NO</small><strong>Claude</strong></div><b>↗</b>
+                </a>
+              </div>
               <div className={styles.contentActions}>
                 <div>
                   <button type="button" className={styles.primaryButton} onClick={() => void copy()}>{copied ? "Prompt copiado ✓" : "Copiar prompt"}</button>

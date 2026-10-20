@@ -35,6 +35,69 @@ export const settingGroups = {
 
 export const allowedSettingKeys = new Set<string>(Object.values(settingGroups).flat());
 
+export type SettingDetails = {
+  label: string;
+  tab: string;
+};
+
+export const settingDetails: Record<string, SettingDetails> = {
+  layer_height: { label: "Altura da camada", tab: "Processo › Qualidade" },
+  initial_layer_print_height: { label: "Altura da primeira camada", tab: "Processo › Qualidade" },
+  wall_generator: { label: "Gerador de paredes", tab: "Processo › Qualidade" },
+  seam_position: { label: "Posição da costura", tab: "Processo › Qualidade" },
+  top_surface_pattern: { label: "Padrão da superfície superior", tab: "Processo › Qualidade" },
+  ironing_type: { label: "Tipo de alisamento", tab: "Processo › Qualidade" },
+  elefant_foot_compensation: { label: "Compensação de pé de elefante", tab: "Processo › Qualidade" },
+  detect_thin_wall: { label: "Detectar paredes finas", tab: "Processo › Qualidade" },
+  top_one_wall_type: { label: "Uma parede na superfície superior", tab: "Processo › Qualidade" },
+  wall_loops: { label: "Número de paredes", tab: "Processo › Resistência" },
+  top_shell_layers: { label: "Camadas superiores", tab: "Processo › Resistência" },
+  bottom_shell_layers: { label: "Camadas inferiores", tab: "Processo › Resistência" },
+  sparse_infill_density: { label: "Densidade de preenchimento", tab: "Processo › Resistência" },
+  sparse_infill_pattern: { label: "Padrão de preenchimento", tab: "Processo › Resistência" },
+  enable_support: { label: "Ativar suporte", tab: "Processo › Suporte" },
+  support_type: { label: "Tipo de suporte", tab: "Processo › Suporte" },
+  support_style: { label: "Estilo do suporte", tab: "Processo › Suporte" },
+  support_threshold_angle: { label: "Ângulo limite do suporte", tab: "Processo › Suporte" },
+  support_on_build_plate_only: { label: "Suporte somente na mesa", tab: "Processo › Suporte" },
+  support_top_z_distance: { label: "Distância Z superior do suporte", tab: "Processo › Suporte" },
+  brim_type: { label: "Tipo de aba", tab: "Processo › Outros › Aderência" },
+  brim_width: { label: "Largura da aba", tab: "Processo › Outros › Aderência" },
+  skirt_loops: { label: "Voltas da saia", tab: "Processo › Outros › Aderência" },
+  initial_layer_speed: { label: "Velocidade da primeira camada", tab: "Processo › Velocidade" },
+  outer_wall_speed: { label: "Velocidade da parede externa", tab: "Processo › Velocidade" },
+  inner_wall_speed: { label: "Velocidade da parede interna", tab: "Processo › Velocidade" },
+  sparse_infill_speed: { label: "Velocidade do preenchimento", tab: "Processo › Velocidade" },
+  internal_solid_infill_speed: { label: "Velocidade do preenchimento sólido interno", tab: "Processo › Velocidade" },
+  top_surface_speed: { label: "Velocidade da superfície superior", tab: "Processo › Velocidade" },
+  support_speed: { label: "Velocidade do suporte", tab: "Processo › Velocidade" },
+  bridge_speed: { label: "Velocidade de ponte", tab: "Processo › Velocidade" },
+  travel_speed: { label: "Velocidade de deslocamento", tab: "Processo › Velocidade" },
+  default_acceleration: { label: "Aceleração padrão", tab: "Processo › Velocidade" },
+  nozzle_temperature: { label: "Temperatura do bico", tab: "Filamento › Temperatura" },
+  nozzle_temperature_initial_layer: { label: "Temperatura do bico na primeira camada", tab: "Filamento › Temperatura" },
+  hot_plate_temp: { label: "Temperatura da mesa lisa PEI/alta temperatura", tab: "Filamento › Temperatura" },
+  hot_plate_temp_initial_layer: { label: "Temperatura inicial da mesa lisa PEI/alta temperatura", tab: "Filamento › Temperatura" },
+  textured_plate_temp: { label: "Temperatura da mesa PEI texturizada", tab: "Filamento › Temperatura" },
+  textured_plate_temp_initial_layer: { label: "Temperatura inicial da mesa PEI texturizada", tab: "Filamento › Temperatura" },
+  cool_plate_temp: { label: "Temperatura da mesa fria", tab: "Filamento › Temperatura" },
+  cool_plate_temp_initial_layer: { label: "Temperatura inicial da mesa fria", tab: "Filamento › Temperatura" },
+  eng_plate_temp: { label: "Temperatura da mesa de engenharia", tab: "Filamento › Temperatura" },
+  eng_plate_temp_initial_layer: { label: "Temperatura inicial da mesa de engenharia", tab: "Filamento › Temperatura" },
+  fan_min_speed: { label: "Velocidade mínima da ventoinha", tab: "Filamento › Resfriamento" },
+  fan_max_speed: { label: "Velocidade máxima da ventoinha", tab: "Filamento › Resfriamento" },
+  overhang_fan_speed: { label: "Ventoinha em balanços", tab: "Filamento › Resfriamento" },
+  close_fan_the_first_x_layers: { label: "Desligar ventoinha nas primeiras camadas", tab: "Filamento › Resfriamento" },
+  slow_down_layer_time: { label: "Tempo de camada para reduzir velocidade", tab: "Filamento › Resfriamento" },
+  filament_max_volumetric_speed: { label: "Velocidade volumétrica máxima", tab: "Filamento › Filamento" },
+  enable_prime_tower: { label: "Ativar torre de purga", tab: "Processo › Outros › Torre de purga" },
+  prime_tower_width: { label: "Largura da torre de purga", tab: "Processo › Outros › Torre de purga" },
+};
+
+export function getSettingDetails(key: string): SettingDetails {
+  return settingDetails[key] ?? { label: key, tab: "Configuração do fatiador" };
+}
+
 export type PrintSelections = {
   printer: string;
   nozzle: string;
@@ -169,7 +232,13 @@ export function buildAiPrompt(project: ProjectInfo, selections: PrintSelections)
   const configLines = Object.entries(settingGroups).flatMap(([group, keys]) => {
     const available = keys.filter((key) => project.settings[key]);
     if (available.length === 0) return [];
-    return [`# ${group}`, ...available.map((key) => `${key} = ${project.settings[key]}`)];
+    return [
+      `# ${group}`,
+      ...available.map((key) => {
+        const details = getSettingDetails(key);
+        return `${key} (${details.label}; aba: ${details.tab}) = ${project.settings[key]}`;
+      }),
+    ];
   });
   const objects = project.objectNames.length ? project.objectNames.join(", ") : "não identificados no arquivo";
   const filaments = project.projectFilaments.length ? project.projectFilaments.join(", ") : "não identificados no arquivo";
@@ -191,7 +260,7 @@ ${configLines.join("\n")}
 Se precisar, pesquise as recomendações do fabricante do filamento e as especificações da impressora antes de responder.
 Responda SOMENTE com um bloco de código JSON neste formato:
 {"resumo":"uma frase","alteracoes":[{"chave":"layer_height","valor":"0.16","motivo":"explicação curta"}]}
-Regras: use apenas chaves da lista acima; mantenha o mesmo formato de valor (ex.: "15%" para densidade); numa chave por filamento, um valor único vale para todos os filamentos; liste só o que realmente deve mudar.`;
+Regras: use apenas chaves da lista acima; mantenha o mesmo formato de valor (ex.: "15%" para densidade); numa chave por filamento, um valor único vale para todos os filamentos; liste só o que realmente deve mudar. Os nomes em português e as abas são apenas referências: em "chave", retorne somente a chave técnica.`;
 }
 
 export function parseAiSuggestion(input: string, project: ProjectInfo): AiSuggestion {
@@ -236,11 +305,8 @@ function coerceLike(value: string, sample: unknown) {
   return value;
 }
 
-export async function createAdjusted3mf(file: File, project: ProjectInfo, changes: SuggestedChange[]) {
-  const zip = await JSZip.loadAsync(file);
-  const configFile = zip.file(project.settingsPath);
-  if (!configFile) throw new Error("O arquivo interno de configurações não foi encontrado.");
-  const config = JSON.parse(await configFile.async("string")) as Record<string, unknown>;
+function applyChangesToConfig(config: Record<string, unknown>, changes: SuggestedChange[]) {
+  const applied = new Set<string>();
 
   for (const change of changes) {
     if (!Object.prototype.hasOwnProperty.call(config, change.chave)) continue;
@@ -248,8 +314,71 @@ export async function createAdjusted3mf(file: File, project: ProjectInfo, change
     config[change.chave] = Array.isArray(current)
       ? current.map((item) => coerceLike(change.valor, item))
       : coerceLike(change.valor, current);
+    applied.add(change.chave);
+  }
+
+  return applied;
+}
+
+function isEmbeddedSettingsPath(path: string) {
+  return /^metadata\/(?:process|filament|machine)_settings_\d+\.config$/i.test(path);
+}
+
+function isStaleSlicePath(path: string) {
+  const lower = path.toLowerCase();
+  return lower === "metadata/slice_info.config"
+    || /^metadata\/plate_\d+\.gcode(?:\.md5)?$/i.test(path);
+}
+
+function valuesMatch(value: unknown, expected: string) {
+  if (Array.isArray(value)) {
+    return value.length > 0 && value.every((item) => item === coerceLike(expected, item));
+  }
+  return value === coerceLike(expected, value);
+}
+
+export async function createAdjusted3mf(file: File, project: ProjectInfo, changes: SuggestedChange[]) {
+  const zip = await JSZip.loadAsync(file);
+  const configFile = zip.file(project.settingsPath);
+  if (!configFile) throw new Error("O arquivo interno de configurações não foi encontrado.");
+  const config = JSON.parse(await configFile.async("string")) as Record<string, unknown>;
+
+  const applied = applyChangesToConfig(config, changes);
+  const missing = changes.filter((change) => !applied.has(change.chave));
+  if (missing.length) {
+    throw new Error(`Não foi possível aplicar: ${missing.map((change) => change.chave).join(", ")}.`);
   }
 
   zip.file(project.settingsPath, JSON.stringify(config, null, 4));
-  return zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+
+  const embeddedPaths = Object.keys(zip.files).filter(isEmbeddedSettingsPath);
+  await Promise.all(embeddedPaths.map(async (path) => {
+    const embeddedFile = zip.file(path);
+    if (!embeddedFile) return;
+    try {
+      const embedded = JSON.parse(await embeddedFile.async("string")) as Record<string, unknown>;
+      if (applyChangesToConfig(embedded, changes).size > 0) {
+        zip.file(path, JSON.stringify(embedded, null, 4));
+      }
+    } catch {
+      // O project_settings.config continua sendo a fonte principal. Perfis legados
+      // que não forem JSON são preservados sem impedir a geração do projeto.
+    }
+  }));
+
+  // Um projeto pode guardar o G-code de um fatiamento anterior. Depois de mudar
+  // configurações, esse cache deixa de representar o projeto e precisa ser recriado.
+  Object.keys(zip.files).filter(isStaleSlicePath).forEach((path) => zip.remove(path));
+
+  const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+  const verificationZip = await JSZip.loadAsync(blob);
+  const verifiedFile = verificationZip.file(project.settingsPath);
+  if (!verifiedFile) throw new Error("O 3MF gerado não contém as configurações atualizadas.");
+  const verifiedConfig = JSON.parse(await verifiedFile.async("string")) as Record<string, unknown>;
+  const notVerified = changes.filter((change) => !valuesMatch(verifiedConfig[change.chave], change.valor));
+  if (notVerified.length) {
+    throw new Error(`O 3MF não confirmou as alterações: ${notVerified.map((change) => change.chave).join(", ")}.`);
+  }
+
+  return blob;
 }
