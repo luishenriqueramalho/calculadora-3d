@@ -3,8 +3,8 @@ import AppShell from "@/components/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PrintLab 3D | Custos e configuração de impressão",
-  description: "Calcule custos e ajuste projetos do Bambu Studio com um fluxo guiado.",
+  title: "PrintLab 3D | Gestão para impressão 3D",
+  description: "Gerencie projetos, produtos e canais de venda da sua empresa de impressão 3D.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

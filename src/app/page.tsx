@@ -1,77 +1,22 @@
 import Link from "next/link";
-import styles from "./home.module.css";
+import styles from "./landing.module.css";
 
-export default function HomePage() {
-  return (
-    <main className={styles.page}>
-      <section className={styles.hero}>
-        <div className={styles.heroCopy}>
-          <span className={styles.eyebrow}>Planeje melhor. Imprima com confiança.</span>
-          <h1>Da ideia ao 3MF pronto para imprimir.</h1>
-          <p>
-            Calcule o preço real do seu projeto e transforme recomendações de IA em configurações
-            aplicadas ao arquivo do Bambu Studio — com revisão antes do download.
-          </p>
-          <div className={styles.actions}>
-            <Link href="/configuracao" className={styles.primary}>Configurar uma impressão <span>→</span></Link>
-            <Link href="/calculadora" className={styles.secondary}>Calcular custos</Link>
-          </div>
-          <div className={styles.trust}>
-            <span>✓ Seu 3MF fica no navegador</span>
-            <span>✓ Você aprova cada alteração</span>
-          </div>
-        </div>
-
-        <div className={styles.visual} aria-label="Fluxo de preparação de impressão 3D">
-          <div className={styles.glow} />
-          <article className={`${styles.floatingCard} ${styles.fileCard}`}>
-            <span className={styles.cardIcon}>3MF</span>
-            <span><small>Projeto</small><strong>escultura.3mf</strong></span>
-            <i>✓</i>
-          </article>
-          <div className={styles.printer} aria-hidden="true">
-            <span className={styles.printerTop} />
-            <span className={styles.printerHead}><i /></span>
-            <span className={styles.printObject} />
-            <span className={styles.bed} />
-          </div>
-          <article className={`${styles.floatingCard} ${styles.settingCard}`}>
-            <span className={styles.sliders}>≡</span>
-            <span><small>Ajuste sugerido</small><strong>20 configurações</strong></span>
-          </article>
-          <div className={styles.status}><i /> Projeto pronto para revisão</div>
-        </div>
-      </section>
-
-      <section className={styles.features} aria-labelledby="features-title">
-        <div className={styles.sectionIntro}>
-          <span>DUAS FERRAMENTAS, UM SÓ FLUXO</span>
-          <h2 id="features-title">Tudo o que você precisa antes de fatiar</h2>
-          <p>Decisões claras para precificar e preparar suas impressões.</p>
-        </div>
-        <div className={styles.featureGrid}>
-          <article>
-            <span className={styles.featureIcon}>▦</span>
-            <div><small>01 · PRECIFICAÇÃO</small><h3>Calculadora de custos</h3></div>
-            <p>Some filamento, energia, máquina e outros custos. Compare margens e preços para marketplaces.</p>
-            <Link href="/calculadora">Abrir calculadora <span>→</span></Link>
-          </article>
-          <article>
-            <span className={`${styles.featureIcon} ${styles.purple}`}>⚙</span>
-            <div><small>02 · PREPARAÇÃO</small><h3>Configuração da impressão</h3></div>
-            <p>Envie o 3MF, gere uma consulta para IA e aplique apenas as recomendações que você aprovar.</p>
-            <Link href="/configuracao">Começar configuração <span>→</span></Link>
-          </article>
-          <aside>
-            <strong>Como funciona</strong>
-            <ol>
-              <li><span>1</span><p><b>Envie o 3MF</b><small>O arquivo é analisado localmente.</small></p></li>
-              <li><span>2</span><p><b>Consulte sua IA</b><small>Copie o prompt pronto.</small></p></li>
-              <li><span>3</span><p><b>Revise e baixe</b><small>Aplique somente o que quiser.</small></p></li>
-            </ol>
-          </aside>
-        </div>
-      </section>
-    </main>
-  );
+export default function LandingPage() {
+  return <main className={styles.landing}>
+    <nav className={styles.nav} aria-label="Navegação principal">
+      <Link href="/" className={styles.brand}><span className={styles.brandMark}>◇</span><span><strong>PrintLab 3D</strong><small>Gestão para makers</small></span></Link>
+      <div className={styles.navLinks}><a href="#recursos">Recursos</a><a href="#integracoes">Integrações</a><a href="#como-funciona">Como funciona</a></div>
+      <div className={styles.navActions}><Link className={styles.loginButton} href="/login">Entrar</Link><Link className={styles.signupButton} href="/cadastro">Criar conta grátis</Link></div>
+    </nav>
+    <section className={styles.hero}>
+      <div className={styles.heroInner}>
+        <div className={styles.heroCopy}><span className={styles.pill}>A gestão da sua impressão 3D, em um só lugar</span><h1>Produza mais.<br/>Venda melhor.<br/><em>Cresça sem limites.</em></h1><p>Calcule custos reais, organize seus projetos e publique produtos no Mercado Livre, Shopee e TikTok Shop sem perder tempo alternando entre plataformas.</p><div className={styles.heroActions}><Link href="/cadastro" className={styles.heroPrimary}>Começar gratuitamente →</Link><a href="#recursos" className={styles.heroSecondary}>Conhecer recursos</a></div><div className={styles.proof}><span>Sem cartão de crédito</span><span>Configuração rápida</span><span>Dados protegidos</span></div></div>
+        <div className={styles.dashboardMock} aria-label="Prévia do painel PrintLab 3D"><div className={styles.mockTop}><span className={styles.mockDots}><i/><i/><i/></span><strong>Visão geral da operação</strong></div><div className={styles.mockBody}><aside className={styles.mockSide}><span/><span/><span/><span/><span/></aside><div className={styles.mockMain}><div className={styles.mockTitle}/><div className={styles.mockSubtitle}/><div className={styles.mockMetrics}><span/><span/><span/></div><div className={styles.mockChart}/><div className={styles.mockChannels}><span>Mercado Livre</span><span>Shopee</span><span>TikTok Shop</span></div></div></div><div className={styles.floatingSale}>Venda confirmada<strong>R$ 149,90</strong></div></div>
+      </div>
+    </section>
+    <section className={styles.section} id="recursos"><div className={styles.sectionIntro}><span>Feito para quem produz</span><h2>Tudo que sua empresa 3D precisa para ganhar escala</h2><p>Da primeira estimativa até o anúncio publicado, sua operação organizada em um fluxo simples.</p></div><div className={styles.featureGrid} id="como-funciona"><article><span className={styles.featureIcon}>▦</span><h3>Custos sem achismo</h3><p>Calcule filamento, energia, máquina, margem e taxas de marketplaces para precificar com segurança.</p></article><article><span className={styles.featureIcon}>▣</span><h3>Projetos organizados</h3><p>Salve cada orçamento e consulte o histórico completo da sua produção sempre que precisar.</p></article><article><span className={styles.featureIcon}>◇</span><h3>Catálogo centralizado</h3><p>Cadastre o produto uma vez e mantenha preço, estoque e informações em uma única fonte.</p></article><article><span className={styles.featureIcon}>◎</span><h3>Publicação multicanal</h3><p>Envie novos produtos para suas lojas conectadas em poucos cliques e reduza tarefas repetitivas.</p></article><article><span className={styles.featureIcon}>↗</span><h3>Visão consolidada</h3><p>Acompanhe pedidos, receita e produtos de todos os canais sem abrir várias abas.</p></article><article><span className={styles.featureIcon}>⚙</span><h3>Impressão bem preparada</h3><p>Use o fluxo guiado para revisar e preparar arquivos 3MF antes de iniciar a produção.</p></article></div></section>
+    <section className={styles.channels} id="integracoes"><div className={styles.channelsInner}><div><h2>Suas lojas falando a mesma língua.</h2><p>Conecte os principais canais de venda, acompanhe toda a operação e publique seu catálogo a partir de um único painel.</p></div><div className={styles.channelCards}><article><span className={styles.ml}>ML</span><strong>Mercado Livre</strong></article><article><span className={styles.shopee}>S</span><strong>Shopee</strong></article><article><span className={styles.tiktok}>TT</span><strong>TikTok Shop</strong></article></div></div></section>
+    <section className={styles.cta}><h2>Pronto para profissionalizar sua produção?</h2><p>Crie sua conta e comece a organizar sua empresa de impressão 3D hoje.</p><Link href="/cadastro">Criar minha conta →</Link></section>
+    <footer className={styles.footer}><span>© 2026 PrintLab 3D</span><span>Custos, produção e vendas em um só lugar.</span></footer>
+  </main>;
 }

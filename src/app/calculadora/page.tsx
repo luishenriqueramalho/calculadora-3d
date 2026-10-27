@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, ReactNode, useMemo, useState } from "react";
+import { useBusiness } from "@/components/BusinessProvider";
 import styles from "../page.module.css";
 
 type FormValues = {
@@ -210,11 +211,14 @@ function resellerPrice(totalCost: number) {
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function Home() {
+  const { saveProject, storageMode } = useBusiness();
   const [values, setValues] = useState<FormValues>(initialValues);
   const [filaments, setFilaments] = useState<Filament[]>(initialFilaments);
   const [pulse, setPulse] = useState(false);
   const [selectedStores, setSelectedStores] = useState<StoreKey[]>([]);
   const [showResellerPrice, setShowResellerPrice] = useState(false);
+  const [projectName, setProjectName] = useState("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   const result = useMemo(() => {
     const hours = numberValue(values.hours) + numberValue(values.minutes) / 60;
@@ -300,6 +304,18 @@ export default function Home() {
     event.preventDefault();
     setPulse(true);
     window.setTimeout(() => setPulse(false), 450);
+  };
+
+  const persistProject = async () => {
+    if (!projectName.trim()) return;
+    setSaveStatus("saving");
+    try {
+      await saveProject({ name: projectName.trim(), status: "priced", values, filaments, result });
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("error");
+    }
+    window.setTimeout(() => setSaveStatus("idle"), 2200);
   };
 
   const inputProps = (key: keyof FormValues) => ({
@@ -453,6 +469,12 @@ export default function Home() {
                 </article>
               )}
             </section>
+
+            <div className={styles.saveProject}>
+              <span><strong>Salvar este projeto</strong><small>{storageMode === "mongodb" ? "Será sincronizado no MongoDB." : "Será salvo neste navegador até o MongoDB ser conectado."}</small></span>
+              <input aria-label="Nome do projeto" value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder="Nome do projeto" />
+              <button type="button" disabled={!projectName.trim() || saveStatus === "saving"} onClick={() => void persistProject()}>{saveStatus === "saving" ? "Salvando..." : saveStatus === "saved" ? "✓ Projeto salvo" : saveStatus === "error" ? "Falha ao salvar" : "Salvar projeto"}</button>
+            </div>
 
             <div className={styles.actions}>
               <button type="submit" className={styles.primaryButton}><Icon name="calculator" size={20} />Calcular</button>

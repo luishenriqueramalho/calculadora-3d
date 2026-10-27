@@ -151,6 +151,14 @@
 .resellerCard p { margin: 11px 0 0; color: #74899a; font-size: 8.5px; line-height: 1.45; }
 
 .actions { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; margin-top: 22px; }
+.saveProject { margin-top: 20px; padding: 13px; border: 1px solid #cfe3f7; border-radius: 12px; background: linear-gradient(145deg, #f6fbff, #edf6ff); display: grid; grid-template-columns: 1fr minmax(160px, .8fr) auto; align-items: center; gap: 11px; }
+.saveProject > span { display: flex; flex-direction: column; gap: 4px; }
+.saveProject strong { color: #214c78; font-size: 11px; }
+.saveProject small { color: #7990a8; font-size: 8.5px; line-height: 1.35; }
+.saveProject input { width: 100%; height: 39px; padding: 0 11px; border: 1px solid #cfdeed; border-radius: 8px; outline: 0; color: #1c3450; background: #fff; font: inherit; font-size: 10px; }
+.saveProject input:focus { border-color: #4a9aec; box-shadow: 0 0 0 3px rgba(39,137,233,.1); }
+.saveProject button { min-height: 39px; padding: 0 13px; border: 1px solid #267bd9; border-radius: 8px; color: #fff; background: #267fdf; font: inherit; font-size: 9px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.saveProject button:disabled { border-color: #bdcddd; color: #8293a5; background: #e5edf5; cursor: not-allowed; }
 .actions button { border: 0; border-radius: 9px; height: 45px; font: inherit; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: transform .18s, box-shadow .18s, background .18s; }
 .actions button:hover { transform: translateY(-1px); }
 .primaryButton { color: #fff; background: linear-gradient(90deg, #1e80ed, #2698fc); box-shadow: 0 8px 18px rgba(30,128,237,.22); }
@@ -253,6 +261,7 @@
   .marginField { grid-template-columns: 1fr 82px; gap: 13px; }
   .marginField label { grid-column: 1 / -1; }
   .actions { grid-template-columns: 1fr; }
+  .saveProject { grid-template-columns: 1fr; }
   .suggestionGrid { grid-template-columns: 1fr; }
   .suggestionGrid article { display: grid; grid-template-columns: 1fr auto; align-items: center; }
   .suggestionGrid article > small { grid-column: 1 / -1; }
