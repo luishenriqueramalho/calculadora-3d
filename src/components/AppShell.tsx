@@ -9,6 +9,7 @@ import styles from "./AppShell.module.css";
 
 const mainItems = [
   { href: "/painel", label: "Visão geral", icon: "⌂" },
+  { href: "/faturamentos", label: "Faturamentos", icon: "↗" },
   { href: "/projetos", label: "Encomendas", icon: "▣" },
   { href: "/filamentos", label: "Filamentos", icon: "◉" },
   { href: "/compras", label: "Compras", icon: "▤" },

@@ -19,7 +19,8 @@ export async function PATCH(request: Request, routeContext: RouteContext<"/api/o
   const current = await context.db.collection("orders").findOne({ $and: [{ id }, companyFilter(context.companyId)] });
   if (!current) return Response.json({ error: "Encomenda não encontrada." }, { status: 404 });
   const input = await request.json() as UpdateInput;
-  const update: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  const now = new Date().toISOString();
+  const update: Record<string, unknown> = { updatedAt: now };
   if (typeof input.customerName === "string") update.customerName = input.customerName.trim();
   if (typeof input.phone === "string") update.phone = input.phone.replace(/\D/g, "");
   if (typeof input.closedAt === "string") update.closedAt = input.closedAt;
@@ -30,6 +31,8 @@ export async function PATCH(request: Request, routeContext: RouteContext<"/api/o
   if (input.status && orderStatuses.includes(input.status)) {
     update.status = input.status;
     if (input.status !== current.status) {
+      if (input.status === "completed") update.completedAt = now;
+      if (input.status === "delivered") update.deliveredAt = now;
       const last = await context.db.collection("orders").find({ $and: [{ status: input.status }, companyFilter(context.companyId)] }).sort({ position: -1 }).limit(1).next();
       update.position = typeof last?.position === "number" ? last.position + 1 : 0;
     }

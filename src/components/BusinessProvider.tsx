@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { CatalogProduct, CompanyUser, CustomerOrder, Filament, MarketplaceConnection, MarketplaceKey, OrderItem, OrderStatus, Purchase, SavedProject } from "@/lib/business-types";
+import type { CatalogProduct, CompanyUser, CustomerOrder, Filament, MarketplaceConnection, MarketplaceKey, OrderItem, OrderRecordState, OrderStatus, Purchase, SavedProject } from "@/lib/business-types";
 import { emptyConnections, orderStatuses } from "@/lib/business-types";
 
 type BusinessState = {
@@ -24,9 +24,13 @@ type BusinessContextValue = BusinessState & {
   saveProject: (project: Omit<SavedProject, "id" | "createdAt" | "updatedAt">) => Promise<SavedProject>;
   addOrder: (order: NewOrder) => Promise<CustomerOrder>;
   updateOrder: (id: string, order: Partial<Omit<CustomerOrder, "id" | "position" | "createdAt" | "updatedAt">>) => Promise<CustomerOrder>;
+  toggleOrderItem: (orderId: string, itemId: string, completed: boolean) => Promise<CustomerOrder>;
+  setOrderRecordState: (orderId: string, state: Exclude<OrderRecordState, "active">) => Promise<CustomerOrder>;
   reorderOrders: (orders: CustomerOrder[]) => Promise<void>;
   addFilament: (filament: Pick<Filament, "color" | "brand" | "price">) => Promise<Filament>;
+  deleteFilament: (id: string) => Promise<void>;
   addPurchase: (purchase: Omit<Purchase, "id" | "total" | "createdAt" | "updatedAt">) => Promise<Purchase>;
+  deletePurchase: (id: string) => Promise<void>;
   addUser: (user: Pick<CompanyUser, "name" | "email">) => Promise<CompanyUser>;
   addProduct: (product: Omit<CatalogProduct, "id" | "createdAt" | "channels">) => Promise<CatalogProduct>;
   publishProduct: (id: string, channels: MarketplaceKey[]) => Promise<void>;
@@ -93,10 +97,32 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     return order;
   }, [request]);
 
+  const toggleOrderItem = useCallback(async (orderId: string, itemId: string, completed: boolean) => {
+    const order = await request(`/api/orders/${orderId}/items/${itemId}`, { completed }, "PATCH") as CustomerOrder;
+    setState((current) => ({ ...current, orders: current.orders.map((item) => item.id === orderId ? order : item) }));
+    return order;
+  }, [request]);
+
+  const setOrderRecordState = useCallback(async (orderId: string, recordState: Exclude<OrderRecordState, "active">) => {
+    const order = await request(`/api/orders/${orderId}/state`, { state: recordState }, "PATCH") as CustomerOrder;
+    setState((current) => ({ ...current, orders: current.orders.map((item) => item.id === orderId ? order : item) }));
+    return order;
+  }, [request]);
+
   const reorderOrders = useCallback(async (orders: CustomerOrder[]) => {
     const previous = state.orders;
-    setState((current) => ({ ...current, orders }));
-    const columns = Object.fromEntries(orderStatuses.map((status) => [status, orders.filter((order) => order.status === status).map((order) => order.id)])) as Record<OrderStatus, string[]>;
+    const now = new Date().toISOString();
+    const enrichedOrders = orders.map((order) => {
+      const previousOrder = previous.find((item) => item.id === order.id);
+      if (!previousOrder || previousOrder.status === order.status) return order;
+      if (order.status === "completed") return { ...order, completedAt: now };
+      if (order.status === "delivered") return { ...order, deliveredAt: now };
+      return order;
+    });
+    const reorderedIds = new Set(enrichedOrders.map((order) => order.id));
+    const mergedOrders = [...enrichedOrders, ...previous.filter((order) => !reorderedIds.has(order.id))];
+    setState((current) => ({ ...current, orders: mergedOrders }));
+    const columns = Object.fromEntries(orderStatuses.map((status) => [status, enrichedOrders.filter((order) => order.status === status).map((order) => order.id)])) as Record<OrderStatus, string[]>;
     try {
       await request("/api/orders/reorder", { columns }, "PUT");
     } catch (error) {
@@ -115,10 +141,24 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     return result.filament;
   }, [request]);
 
+  const deleteFilament = useCallback(async (id: string) => {
+    await request(`/api/filaments/${id}`, {}, "DELETE");
+    setState((current) => ({
+      ...current,
+      filaments: current.filaments.filter((filament) => filament.id !== id),
+      purchases: current.purchases.filter((purchase) => purchase.filamentId !== id),
+    }));
+  }, [request]);
+
   const addPurchase = useCallback(async (input: Omit<Purchase, "id" | "total" | "createdAt" | "updatedAt">) => {
     const purchase = await request("/api/purchases", input) as Purchase;
     setState((current) => ({ ...current, purchases: [purchase, ...current.purchases] }));
     return purchase;
+  }, [request]);
+
+  const deletePurchase = useCallback(async (id: string) => {
+    await request(`/api/purchases/${id}`, {}, "DELETE");
+    setState((current) => ({ ...current, purchases: current.purchases.filter((purchase) => purchase.id !== id) }));
   }, [request]);
 
   const addUser = useCallback(async (input: Pick<CompanyUser, "name" | "email">) => {
@@ -165,15 +205,19 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     saveProject,
     addOrder,
     updateOrder,
+    toggleOrderItem,
+    setOrderRecordState,
     reorderOrders,
     addFilament,
+    deleteFilament,
     addPurchase,
+    deletePurchase,
     addUser,
     addProduct,
     publishProduct,
     connectStore,
     syncStore,
-  }), [addFilament, addOrder, addProduct, addPurchase, addUser, connectStore, publishProduct, ready, reorderOrders, saveProject, state, storageMode, syncStore, updateOrder]);
+  }), [addFilament, addOrder, addProduct, addPurchase, addUser, connectStore, deleteFilament, deletePurchase, publishProduct, ready, reorderOrders, saveProject, setOrderRecordState, state, storageMode, syncStore, toggleOrderItem, updateOrder]);
 
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>;
 }

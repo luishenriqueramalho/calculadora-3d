@@ -24,5 +24,9 @@
 .identityAvatar { width: 32px; height: 32px; border-radius: 9px; color: #fff; background: linear-gradient(145deg,#5b9cf1,#336bd4); display: grid; place-items: center; font-size: 9px; font-weight: 900; }
 .badge { display: inline-flex; padding: 5px 7px; border-radius: 99px; color: #186f9d; background: #eaf6fc; font-size: 8px; font-weight: 900; }
 .pending { color: #a8660d; background: #fff3dd; }
+.deleteButton { min-height: 30px; padding: 0 10px; border: 1px solid #efc8c5; border-radius: 8px; color: #b33d36; background: #fff5f4; font: inherit; font-size: 8px; font-weight: 900; cursor: pointer; }
+.deleteButton:disabled { opacity: .55; cursor: wait; }
+.linkedLabel { color: #8794a5; font-size: 7.5px; white-space: nowrap; }
+.tableActions { display: flex; align-items: center; gap: 7px; }
 @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } .purchaseMetrics { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .fieldRow, .purchaseMetrics { grid-template-columns: 1fr; } }

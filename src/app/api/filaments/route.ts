@@ -29,6 +29,8 @@ export async function POST(request: Request) {
     purchasedAt: dateInFortaleza(),
     supplier: brand,
     notes: "Compra criada automaticamente pelo cadastro de filamento.",
+    source: "filament" as const,
+    filamentId: publicFilament.id,
     createdAt: now,
     updatedAt: now,
   };
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
   try {
     await context.db.collection("filaments").insertOne(filament);
     filamentInserted = true;
-    await context.db.collection("purchases").insertOne({ ...publicPurchase, companyId: context.companyId, ownerId: context.companyId, filamentId: publicFilament.id });
+    await context.db.collection("purchases").insertOne({ ...publicPurchase, companyId: context.companyId, ownerId: context.companyId });
   } catch (error) {
     if (filamentInserted) await context.db.collection("filaments").deleteOne({ id: publicFilament.id, companyId: context.companyId });
     throw error;

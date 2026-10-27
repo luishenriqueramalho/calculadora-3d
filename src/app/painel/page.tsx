@@ -9,13 +9,14 @@ const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL
 
 export default function DashboardPage() {
   const { orders, connections, storageMode } = useBusiness();
-  const totalCost = orders.reduce((sum, order) => sum + order.cost, 0);
-  const totalSales = orders.reduce((sum, order) => sum + order.salePrice, 0);
-  const totalProfit = orders.reduce((sum, order) => sum + order.profit, 0);
+  const activeOrders = orders.filter((order) => !order.recordState || order.recordState === "active");
+  const totalCost = activeOrders.reduce((sum, order) => sum + order.cost, 0);
+  const totalSales = activeOrders.reduce((sum, order) => sum + order.salePrice, 0);
+  const totalProfit = activeOrders.reduce((sum, order) => sum + order.profit, 0);
   const connected = connections.filter((store) => store.status === "connected").length;
   const classFor = (id: MarketplaceKey) => styles[id];
-  const count = (status: "production" | "completed" | "delivered") => orders.filter((order) => order.status === status).length;
-  const recent = [...orders].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
+  const count = (status: "production" | "completed" | "delivered") => activeOrders.filter((order) => order.status === status).length;
+  const recent = [...activeOrders].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
   return <main className={styles.page}>
     <header className={styles.pageHeader}><div><span className={styles.eyebrow}>Painel administrativo</span><h1>Sua produção em um só lugar</h1><p>Acompanhe encomendas, prazos e o resultado financeiro da empresa.</p></div><div className={styles.headerActions}><Link href="/calculadora" className={styles.secondary}>▦ Calcular custo</Link><Link href="/projetos" className={styles.primary}>＋ Nova encomenda</Link></div></header>
     <p className={styles.storageNote}><strong>Armazenamento:</strong> {storageMode === "mongodb" ? "MongoDB conectado e sincronizando." : "não foi possível sincronizar com o banco agora."}</p>

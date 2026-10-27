@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     id: crypto.randomUUID(), item, category, quantity, unitPrice,
     total: Math.round(quantity * unitPrice * 100) / 100,
     purchasedAt, supplier: supplier || undefined, notes: notes || undefined,
+    source: "manual" as const,
     createdAt: now, updatedAt: now,
   };
   await context.db.collection("purchases").insertOne({ ...publicPurchase, companyId: context.companyId, ownerId: context.companyId });

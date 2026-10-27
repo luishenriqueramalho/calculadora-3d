@@ -27,7 +27,7 @@ function parseInput(input: OrderInput) {
     if (name.length < 2) throw new Error(`Informe o nome do produto ${index + 1}.`);
     if (!Number.isFinite(quantity) || quantity <= 0) throw new Error(`Informe uma quantidade válida para ${name}.`);
     if (!Number.isFinite(salePrice) || salePrice < 0 || !Number.isFinite(cost) || cost < 0) throw new Error(`Informe valores válidos para ${name}.`);
-    return { id: crypto.randomUUID(), name, quantity, salePrice, cost };
+    return { id: crypto.randomUUID(), name, quantity, salePrice, cost, completed: false, completedAt: null };
   });
   const salePrice = Math.round(items.reduce((sum, item) => sum + item.salePrice, 0) * 100) / 100;
   const cost = Math.round(items.reduce((sum, item) => sum + item.cost, 0) * 100) / 100;
@@ -54,6 +54,8 @@ export async function POST(request: Request) {
       position: typeof last?.position === "number" ? last.position + 1 : 0,
       createdAt: now,
       updatedAt: now,
+      ...(input.status === "completed" ? { completedAt: now } : {}),
+      ...(input.status === "delivered" ? { deliveredAt: now } : {}),
     };
     const order = { ...publicOrder, companyId: context.companyId, ownerId: context.companyId };
     await context.db.collection("orders").insertOne(order);

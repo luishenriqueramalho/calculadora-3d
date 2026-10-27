@@ -51,6 +51,7 @@ export type SavedProject = {
 export const orderStatuses = ["quote", "queued", "production", "completed", "delivered"] as const;
 
 export type OrderStatus = (typeof orderStatuses)[number];
+export type OrderRecordState = "active" | "cancelled" | "deleted";
 
 export const orderStatusLabels: Record<OrderStatus, string> = {
   quote: "Em orçamento",
@@ -66,6 +67,8 @@ export type OrderItem = {
   quantity: number;
   salePrice: number;
   cost: number;
+  completed?: boolean;
+  completedAt?: string | null;
 };
 
 export type CustomerOrder = {
@@ -83,6 +86,11 @@ export type CustomerOrder = {
   position: number;
   createdAt: string;
   updatedAt: string;
+  completedAt?: string;
+  deliveredAt?: string;
+  recordState?: OrderRecordState;
+  cancelledAt?: string;
+  deletedAt?: string;
 };
 
 export type Filament = {
@@ -108,6 +116,8 @@ export type Purchase = {
   purchasedAt: string;
   supplier?: string;
   notes?: string;
+  source?: "manual" | "filament";
+  filamentId?: string;
   createdAt: string;
   updatedAt: string;
 };

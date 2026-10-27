@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useBusiness } from "@/components/BusinessProvider";
-import { purchaseCategories, type PurchaseCategory } from "@/lib/business-types";
+import { purchaseCategories, type Purchase, type PurchaseCategory } from "@/lib/business-types";
 import styles from "../admin.module.css";
 import management from "../management.module.css";
 
@@ -13,11 +13,12 @@ const today = () => {
 };
 
 export default function PurchasesPage() {
-  const { purchases, addPurchase } = useBusiness();
+  const { purchases, addPurchase, deletePurchase, deleteFilament } = useBusiness();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [unitPrice, setUnitPrice] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const currentMonth = today().slice(0, 7);
   const summary = useMemo(() => {
     const monthPurchases = purchases.filter((purchase) => purchase.purchasedAt.startsWith(currentMonth));
@@ -39,6 +40,19 @@ export default function PurchasesPage() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Não foi possível cadastrar a compra."); }
     finally { setLoading(false); }
   };
+  const removePurchase = async (purchase: Purchase) => {
+    const linkedToFilament = purchase.source === "filament" || Boolean(purchase.filamentId);
+    const message = linkedToFilament ? "Esta compra pertence a um filamento. Excluir a compra e o filamento vinculado?" : "Excluir esta compra permanentemente?";
+    if (!window.confirm(message)) return;
+    setDeletingId(purchase.id); setError("");
+    try {
+      if (linkedToFilament && purchase.filamentId) await deleteFilament(purchase.filamentId);
+      else if (linkedToFilament) throw new Error("Não foi possível localizar o filamento vinculado.");
+      else await deletePurchase(purchase.id);
+    }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Não foi possível excluir a compra."); }
+    finally { setDeletingId(null); }
+  };
 
   return <main className={styles.page}>
     <header className={styles.pageHeader}><div><span className={styles.eyebrow}>Despesas do dia a dia</span><h1>Compras</h1><p>Registre insumos, ferramentas, embalagens e tudo o que a empresa compra para manter a operação funcionando.</p></div></header>
@@ -57,7 +71,7 @@ export default function PurchasesPage() {
         <label className={management.field}><span>Fornecedor <small>(opcional)</small></span><input name="supplier" placeholder="Ex.: Loja do Maker" /></label>
         <label className={management.field}><span>Observações <small>(opcional)</small></span><textarea name="notes" placeholder="Detalhes da compra, finalidade ou referência da nota." /></label>
       </div><button className={styles.primary} disabled={loading}>{loading ? "Salvando..." : "＋ Cadastrar compra"}</button></form></article>
-      <article className={styles.card}><div className={styles.cardHeader}><div><h2>Histórico de compras</h2><p>{purchases.length} registro(s) na empresa</p></div></div>{purchases.length ? <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Item</th><th>Categoria</th><th>Data</th><th>Quantidade</th><th>Valor unitário</th><th>Total</th></tr></thead><tbody>{purchases.map((purchase) => <tr key={purchase.id}><td><strong>{purchase.item}</strong>{(purchase.supplier || purchase.notes) && <small className={management.purchaseNote}>{purchase.supplier}{purchase.supplier && purchase.notes ? " · " : ""}{purchase.notes}</small>}</td><td><span className={management.badge}>{purchase.category}</span></td><td>{new Date(`${purchase.purchasedAt}T12:00:00`).toLocaleDateString("pt-BR")}</td><td>{purchase.quantity.toLocaleString("pt-BR")}</td><td>{money.format(purchase.unitPrice)}</td><td><strong>{money.format(purchase.total)}</strong></td></tr>)}</tbody></table></div> : <div className={styles.empty}><span>▤</span><h3>Nenhuma compra cadastrada</h3><p>Use o formulário para registrar a primeira compra do dia a dia.</p></div>}</article>
+      <article className={styles.card}><div className={styles.cardHeader}><div><h2>Histórico de compras</h2><p>{purchases.length} registro(s) na empresa</p></div></div>{purchases.length ? <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Item</th><th>Categoria</th><th>Data</th><th>Quantidade</th><th>Valor unitário</th><th>Total</th><th>Ações</th></tr></thead><tbody>{purchases.map((purchase) => <tr key={purchase.id}><td><strong>{purchase.item}</strong>{(purchase.supplier || purchase.notes) && <small className={management.purchaseNote}>{purchase.supplier}{purchase.supplier && purchase.notes ? " · " : ""}{purchase.notes}</small>}</td><td><span className={management.badge}>{purchase.category}</span></td><td>{new Date(`${purchase.purchasedAt}T12:00:00`).toLocaleDateString("pt-BR")}</td><td>{purchase.quantity.toLocaleString("pt-BR")}</td><td>{money.format(purchase.unitPrice)}</td><td><strong>{money.format(purchase.total)}</strong></td><td><span className={management.tableActions}>{(purchase.source === "filament" || purchase.filamentId) && <span className={management.linkedLabel}>Filamento</span>}<button className={management.deleteButton} type="button" disabled={deletingId === purchase.id} onClick={() => void removePurchase(purchase)}>{deletingId === purchase.id ? "Excluindo..." : "Excluir"}</button></span></td></tr>)}</tbody></table></div> : <div className={styles.empty}><span>▤</span><h3>Nenhuma compra cadastrada</h3><p>Use o formulário para registrar a primeira compra do dia a dia.</p></div>}</article>
     </section>
   </main>;
 }
