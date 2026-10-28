@@ -10,7 +10,7 @@ export async function GET() {
   const { db, companyId } = context;
   const [projects, products, savedConnections, orders, filaments, purchases, users] = await Promise.all([
     db.collection("projects").find(companyFilter(companyId), { projection: { _id: 0, companyId: 0, ownerId: 0 } }).sort({ createdAt: -1 }).toArray(),
-    db.collection("products").find(companyFilter(companyId), { projection: { _id: 0, companyId: 0, ownerId: 0 } }).sort({ createdAt: -1 }).toArray(),
+    db.collection("products").find({ $and: [{ deletedAt: { $exists: false } }, companyFilter(companyId)] }, { projection: { _id: 0, companyId: 0, ownerId: 0, deletedAt: 0 } }).sort({ createdAt: -1 }).toArray(),
     db.collection("connections").find(companyFilter(companyId)).toArray(),
     db.collection("orders").find(companyFilter(companyId), { projection: { _id: 0, companyId: 0, ownerId: 0 } }).sort({ status: 1, position: 1 }).toArray(),
     db.collection("filaments").find(companyFilter(companyId), { projection: { _id: 0, companyId: 0, ownerId: 0 } }).sort({ createdAt: -1 }).toArray(),

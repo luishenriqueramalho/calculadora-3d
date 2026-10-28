@@ -67,6 +67,10 @@ export type OrderItem = {
   quantity: number;
   salePrice: number;
   cost: number;
+  pricingMode?: "manualTotal" | "catalogUnit";
+  catalogProductId?: string;
+  unitSalePrice?: number;
+  unitCost?: number;
   completed?: boolean;
   completedAt?: string | null;
 };
@@ -138,10 +142,12 @@ export type CatalogProduct = {
   name: string;
   sku: string;
   description: string;
+  costPrice: number;
   price: number;
   stock: number;
   category: string;
   createdAt: string;
+  updatedAt?: string;
   channels: Record<MarketplaceKey, ProductChannelState>;
 };
 

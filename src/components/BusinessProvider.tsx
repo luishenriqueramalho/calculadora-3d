@@ -17,6 +17,7 @@ type BusinessState = {
 type NewOrder = Omit<CustomerOrder, "id" | "items" | "profit" | "position" | "createdAt" | "updatedAt"> & {
   items: Array<Omit<OrderItem, "id">>;
 };
+type ProductInput = Omit<CatalogProduct, "id" | "createdAt" | "updatedAt" | "channels">;
 
 type BusinessContextValue = BusinessState & {
   ready: boolean;
@@ -32,7 +33,9 @@ type BusinessContextValue = BusinessState & {
   addPurchase: (purchase: Omit<Purchase, "id" | "total" | "createdAt" | "updatedAt">) => Promise<Purchase>;
   deletePurchase: (id: string) => Promise<void>;
   addUser: (user: Pick<CompanyUser, "name" | "email">) => Promise<CompanyUser>;
-  addProduct: (product: Omit<CatalogProduct, "id" | "createdAt" | "channels">) => Promise<CatalogProduct>;
+  addProduct: (product: ProductInput) => Promise<CatalogProduct>;
+  updateProduct: (id: string, product: ProductInput) => Promise<CatalogProduct>;
+  deleteProduct: (id: string) => Promise<void>;
   publishProduct: (id: string, channels: MarketplaceKey[]) => Promise<void>;
   connectStore: (id: MarketplaceKey) => Promise<void>;
   syncStore: (id: MarketplaceKey) => Promise<void>;
@@ -167,10 +170,21 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     return user;
   }, [request]);
 
-  const addProduct = useCallback(async (input: Omit<CatalogProduct, "id" | "createdAt" | "channels">) => {
+  const addProduct = useCallback(async (input: ProductInput) => {
     const product = await request("/api/products", input) as CatalogProduct;
     setState((current) => ({ ...current, products: [product, ...current.products] }));
     return product;
+  }, [request]);
+
+  const updateProduct = useCallback(async (id: string, input: ProductInput) => {
+    const product = await request(`/api/products/${id}`, input, "PATCH") as CatalogProduct;
+    setState((current) => ({ ...current, products: current.products.map((item) => item.id === id ? product : item) }));
+    return product;
+  }, [request]);
+
+  const deleteProduct = useCallback(async (id: string) => {
+    await request(`/api/products/${id}`, {}, "DELETE");
+    setState((current) => ({ ...current, products: current.products.filter((product) => product.id !== id) }));
   }, [request]);
 
   const publishProduct = useCallback(async (id: string, channels: MarketplaceKey[]) => {
@@ -214,10 +228,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     deletePurchase,
     addUser,
     addProduct,
+    updateProduct,
+    deleteProduct,
     publishProduct,
     connectStore,
     syncStore,
-  }), [addFilament, addOrder, addProduct, addPurchase, addUser, connectStore, deleteFilament, deletePurchase, publishProduct, ready, reorderOrders, saveProject, setOrderRecordState, state, storageMode, syncStore, toggleOrderItem, updateOrder]);
+  }), [addFilament, addOrder, addProduct, addPurchase, addUser, connectStore, deleteFilament, deleteProduct, deletePurchase, publishProduct, ready, reorderOrders, saveProject, setOrderRecordState, state, storageMode, syncStore, toggleOrderItem, updateOrder, updateProduct]);
 
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>;
 }

@@ -3,20 +3,20 @@
 .brand { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 9px; color: #fff; text-decoration: none; }
 .brand > span:last-child { display: flex; flex-direction: column; gap: 2px; }
 .brand strong { font-size: 17px; letter-spacing: -.02em; }
-.brand small { color: #8fa1c0; font-size: 10px; }
+.brand small { color: #8fa1c0; font-size: 11px; }
 .mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: #fff; background: linear-gradient(145deg, #4ea9ff, #2677ee); box-shadow: 0 8px 22px rgba(45,126,239,.32); }
 .mark svg { width: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .nav { min-height: 0; margin-top: 30px; padding-right: 2px; display: flex; flex: 1; flex-direction: column; gap: 4px; overflow-y: auto; }
-.navLabel { margin: 18px 12px 7px; color: #60718f; font-size: 9px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+.navLabel { margin: 18px 12px 7px; color: #60718f; font-size: 10.5px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
 .nav a { min-height: 44px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; gap: 12px; color: #9eacc4; text-decoration: none; font-size: 12px; font-weight: 700; transition: .18s ease; }
 .nav a:hover { color: #fff; background: rgba(255,255,255,.055); }
 .nav a.active { color: #fff; background: linear-gradient(90deg, rgba(55,139,244,.23), rgba(55,139,244,.08)); box-shadow: inset 3px 0 #428ff0; }
 .nav a span { width: 23px; color: #7f91ad; font-size: 17px; text-align: center; }
 .nav a.active span { color: #66b0ff; }
 .sidebarFooter { margin-top: auto; padding: 13px; border: 1px solid rgba(255,255,255,.075); border-radius: 12px; background: rgba(255,255,255,.035); }
-.sidebarFooter span { display: flex; align-items: center; gap: 7px; color: #cbd8ed; font-size: 10px; font-weight: 700; }
+.sidebarFooter span { display: flex; align-items: center; gap: 7px; color: #cbd8ed; font-size: 11px; font-weight: 700; }
 .sidebarFooter i { width: 7px; height: 7px; border-radius: 50%; background: #2fd29b; box-shadow: 0 0 0 4px rgba(47,210,155,.1); }
-.sidebarFooter small { display: block; margin-top: 6px; color: #6f809c; font-size: 9px; line-height: 1.45; }
+.sidebarFooter small { display: block; margin-top: 6px; color: #6f809c; font-size: 10.5px; line-height: 1.45; }
 .body { min-height: 100vh; margin-left: 248px; }
 .topbar { position: sticky; top: 0; z-index: 40; min-height: 70px; padding: 0 clamp(22px, 3vw, 46px); border-bottom: 1px solid #e4e9f1; background: rgba(255,255,255,.88); backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .workspaceName { display: flex; align-items: center; gap: 9px; color: #536176; font-size: 11px; font-weight: 700; }
@@ -25,7 +25,7 @@
 .account button { width: 36px; height: 36px; border: 1px solid #e2e8f0; border-radius: 10px; color: #68778e; background: #fff; cursor: pointer; }
 .accountCopy { display: flex; flex-direction: column; gap: 2px; text-align: right; }
 .accountCopy strong { color: #29364b; font-size: 11px; }
-.accountCopy small { color: #8a96a8; font-size: 9px; }
+.accountCopy small { color: #8a96a8; font-size: 10.5px; }
 .avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: linear-gradient(145deg, #5b9cf1, #336bd4); font-size: 11px; font-weight: 800; }
 .content { min-height: calc(100vh - 70px); }
 .menuButton { display: none; }
